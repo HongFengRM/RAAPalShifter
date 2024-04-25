@@ -14,14 +14,14 @@ def LoadPAL(PATH = 'target.pal'):
     contentlist=[]
     with open(PATH, 'rb') as f:
             content = f.read().hex()
-            print(content)
+            #print(content)
 
             for i in range(256):
                     start=i*6
                     end=i*6+6
                     section=content[start:end]
                     contentlist.append(section)
-            print(contentlist)
+            #print(contentlist)
     #byd这个色盘是6bit
     colorlist=[]
     for i in contentlist:
@@ -76,7 +76,7 @@ def PALdraw(Target_list):
         bottom_right = (40+(k*40), 16+((i-adjuster)*16))
         #color = (254, 0, 0)  # 狗娘养的,bgr??? rgb得转过去
         color=(Target_list[i][2],Target_list[i][1],Target_list[i][0])
-        print(Target_list[i])
+        #print(Target_list[i])
         thickness = -1
         cv2.rectangle(canvas2, top_left, bottom_right, color, thickness)
     #cv2.imshow('Canvas', canvas2)
@@ -110,9 +110,9 @@ def PAL_save(Target_list,Saving_Path="pal edited.pal"):
             o=convert_6bit_to_hex(k)[1:]
             trans6colorlist.append(o)
 
-    print(trans6colorlist)
+    #print(trans6colorlist)
     combined_string = ''.join(trans6colorlist)
-    print(combined_string)
+    #print(combined_string)
         #保存神必文件
     with open(Saving_Path, 'wb') as f:
             f.write(bytes.fromhex(combined_string))
@@ -148,7 +148,7 @@ def change_hls():
 
     cv2.imshow("image", new_bgr)
 
-    print("本次更新的HLS差值："+str(g_diff_h)+"\\"+str(g_diff_l)+"\\"+str(g_diff_s))
+    #print("本次更新的HLS差值："+str(g_diff_h)+"\\"+str(g_diff_l)+"\\"+str(g_diff_s))
 
 
 # h分量 值修改
@@ -182,12 +182,21 @@ def on_value_s(a):
 def main():
 #加入虚假的UI
     import os
+    import tkinter.filedialog
     global g_hls_h, g_hls_l, g_hls_s
 
-    print("===========================================")
-    print("            色盘HSL调整器")
-    print("请输入目标色盘路径或回车以读取target.pal")
-    Inputpath=input()
+    #print("===========================================")
+    #print("            色盘HSL调整器")
+    #print("请输入目标色盘路径或回车以读取target.pal")
+    # 创建根窗口
+    root = tkinter.Tk()
+    # 隐藏根窗口
+    root.withdraw()
+
+    Inputpath = tkinter.filedialog.askopenfilename(title = "请选择一个要打开的PAL文件",
+                                 filetypes = [("WestWood 色盘文件", "*.pal")])
+
+    #Inputpath=input()
     if Inputpath=="":
           Inputpath="target.pal"
     #先给色盘读取出来
@@ -201,9 +210,9 @@ def main():
     g_hls_l = hls[:, :, 1]
     g_hls_s = hls[:, :, 2]
 
-    print("在弹出的图形窗口里进行调整，调整结束后按回车键保存 不要点右上角关闭窗口！")
+    #print("在弹出的图形窗口里进行调整，调整结束后按回车键保存 不要点右上角关闭窗口！")
 
-    print(img_org.shape)
+    #print(img_org.shape)
 
     # 滑动条创建、设置初始值
     cv2.namedWindow("image")
@@ -217,7 +226,7 @@ def main():
     # 退出
     while True:
         key = cv2.waitKey(50) & 0xFF
-        if key == 13:  # 退出 esc
+        if key == 13 or  cv2.getWindowProperty("image", cv2.WND_PROP_VISIBLE) < 1.0:  # 退出 esc
             break
 
     
@@ -226,8 +235,14 @@ def main():
 
     #保存部分  print("本次更新的HLS差值："+str(g_diff_h)+"\\"+str(g_diff_l)+"\\"+str(g_diff_s))
     adjedcolorlist=PAL_hsl_adj(loadedpal,g_diff_h,g_diff_l,g_diff_s)
-    PAL_save(adjedcolorlist)
-    print("文件保存在py文件根目录下")
+
+    save_file_path = tkinter.filedialog.asksaveasfilename(title = "请创建或者选择一个保存数据的PAL文件",
+                                   filetypes =  [("WestWood 色盘文件", "*.pal")],
+                                   defaultextension = ".pal")
+    if save_file_path=="":
+          save_file_path="targetedited.pal"
+    PAL_save(adjedcolorlist,save_file_path)
+    #print("文件保存 程序退出")
 
 if __name__ == '__main__':
     main()
